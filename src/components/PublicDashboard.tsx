@@ -2,7 +2,7 @@ import React from 'react';
 import type { Denuncia, FiltrosDenuncia, MetricasGenerales } from '../types';
 import { Filters } from './Filters';
 import { Map } from './Map';
-import { GravityDonutChart, TypesBarChart } from './Charts';
+import { GravityDonutChart, TypesBarChart, CompaniesBarChart, TrendLineChart } from './Charts';
 import { AlertCircle, ClipboardList, Flame, Sparkles, MapPin } from 'lucide-react';
 
 interface PublicDashboardProps {
@@ -101,49 +101,48 @@ export const PublicDashboard: React.FC<PublicDashboardProps> = ({
         </div>
       </section>
 
-      {/* Filtros */}
+      {/* Mapa Interactivo (Crecimiento Vertical a h-[620px] y de Ancho Completo para mayor protagonismo) */}
+      <section className="flex flex-col space-y-2 w-full">
+        <div className="flex justify-between items-center px-1">
+          <h3 className="font-bold text-slate-850 dark:text-slate-200 text-sm flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+            Mapa de Distribución Geográfica de Denuncias
+          </h3>
+          {selectedDenunciaId && (
+            <button
+              onClick={() => setSelectedDenunciaId(null)}
+              className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 transition-colors font-semibold"
+            >
+              Limpiar Selección
+            </button>
+          )}
+        </div>
+        <div className="h-[620px] w-full shadow-md rounded-2xl border border-slate-200 dark:border-slate-800">
+          {loading ? (
+            <div className="w-full h-full bg-slate-100 dark:bg-slate-900/40 rounded-2xl flex items-center justify-center animate-pulse border border-slate-200 dark:border-slate-800">
+              <span className="text-slate-400 text-sm">Cargando mapa cartográfico...</span>
+            </div>
+          ) : (
+            <Map
+              denuncias={denuncias.filter(d => d.latitud !== null && d.longitud !== null)}
+              selectedDenunciaId={selectedDenunciaId}
+              onSelectDenuncia={setSelectedDenunciaId}
+              theme={theme}
+            />
+          )}
+        </div>
+      </section>
+
+      {/* Grilla Completa de Análisis de Estadísticas */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+        <GravityDonutChart data={metricas.porGravedad} loading={loading} theme={theme} />
+        <TypesBarChart data={metricas.porTipo} loading={loading} theme={theme} />
+        <CompaniesBarChart denuncias={denuncias} loading={loading} theme={theme} />
+        <TrendLineChart denuncias={denuncias} loading={loading} theme={theme} />
+      </section>
+
+      {/* Buscador y Filtros */}
       <Filters filtros={filtros} setFiltros={setFiltros} onReset={onResetFiltros} theme={theme} />
-
-      {/* Mapa y Gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Mapa Interactivo (Mayor ancho y visibilidad) */}
-        <div className="lg:col-span-2 h-[500px] flex flex-col space-y-2">
-          <div className="flex justify-between items-center px-1">
-            <h3 className="font-bold text-slate-850 dark:text-slate-200 text-sm flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-              Distribución Geográfica de Denuncias
-            </h3>
-            {selectedDenunciaId && (
-              <button
-                onClick={() => setSelectedDenunciaId(null)}
-                className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 transition-colors font-semibold"
-              >
-                Limpiar Selección
-              </button>
-            )}
-          </div>
-          <div className="flex-grow shadow-md rounded-2xl border border-slate-200 dark:border-slate-800">
-            {loading ? (
-              <div className="w-full h-full bg-slate-100 dark:bg-slate-900/40 rounded-2xl flex items-center justify-center animate-pulse border border-slate-200 dark:border-slate-800">
-                <span className="text-slate-400 text-sm">Cargando mapa cartográfico...</span>
-              </div>
-            ) : (
-              <Map
-                denuncias={denuncias.filter(d => d.latitud !== null && d.longitud !== null)}
-                selectedDenunciaId={selectedDenunciaId}
-                onSelectDenuncia={setSelectedDenunciaId}
-                theme={theme}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Gráficos */}
-        <div className="space-y-6">
-          <GravityDonutChart data={metricas.porGravedad} loading={loading} theme={theme} />
-          <TypesBarChart data={metricas.porTipo} loading={loading} theme={theme} />
-        </div>
-      </div>
 
       {/* Catálogo de Casos */}
       <section className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 glass-panel space-y-6 shadow-sm">
@@ -152,7 +151,7 @@ export const PublicDashboard: React.FC<PublicDashboardProps> = ({
             <Flame size={18} className="text-amber-500" />
             Reportes Filtrados ({denuncias.length})
           </h3>
-          <span className="text-xs text-slate-500">Salaverry, La Libertad</span>
+          <span className="text-xs text-slate-550">Salaverry, La Libertad</span>
         </div>
 
         {loading ? (
@@ -169,17 +168,17 @@ export const PublicDashboard: React.FC<PublicDashboardProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {denuncias.map(denuncia => {
               const gravityColors: Record<string, { badge: string; dot: string }> = {
-                Alta: { badge: 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400', dot: 'bg-red-500' },
-                Media: { badge: 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400', dot: 'bg-amber-500' },
-                Baja: { badge: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-500' },
+                Alta: { badge: 'bg-red-50/70 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-650 dark:text-red-400', dot: 'bg-red-500' },
+                Media: { badge: 'bg-amber-50/70 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-650 dark:text-amber-400', dot: 'bg-amber-500' },
+                Baja: { badge: 'bg-emerald-50/70 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-650 dark:text-emerald-400', dot: 'bg-emerald-500' },
               };
-              const colors = gravityColors[denuncia.gravedad] || { badge: 'bg-slate-500/10 border-slate-500/20 text-slate-500', dot: 'bg-slate-400' };
+              const colors = gravityColors[denuncia.gravedad] || { badge: 'bg-slate-50 dark:bg-slate-500/10 border-slate-200 dark:border-slate-500/20 text-slate-500', dot: 'bg-slate-400' };
 
               const stateColors: Record<string, string> = {
-                Pendiente: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
-                'En Proceso': 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-                Resuelto: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-                Desestimado: 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20',
+                Pendiente: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/20',
+                'En Proceso': 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20',
+                Resuelto: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20',
+                Desestimado: 'bg-slate-50 dark:bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-500/20',
               };
               const stateBadge = stateColors[denuncia.estado] || 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300';
 
@@ -189,7 +188,7 @@ export const PublicDashboard: React.FC<PublicDashboardProps> = ({
                   onClick={() => {
                     if (denuncia.latitud && denuncia.longitud) {
                       setSelectedDenunciaId(denuncia.id);
-                      window.scrollTo({ top: 300, behavior: 'smooth' });
+                      window.scrollTo({ top: 350, behavior: 'smooth' });
                     }
                   }}
                   className={`group bg-slate-50/50 dark:bg-slate-950/50 hover:bg-white dark:hover:bg-slate-900/60 rounded-xl p-5 border transition-all duration-300 cursor-pointer flex flex-col justify-between h-full ${
@@ -212,7 +211,7 @@ export const PublicDashboard: React.FC<PublicDashboardProps> = ({
                       {denuncia.empresa || 'Presunto Infractor Desconocido'}
                     </h4>
 
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
+                    <p className="text-xs text-slate-555 dark:text-slate-400 line-clamp-3 leading-relaxed">
                       {denuncia.descripcion}
                     </p>
 

@@ -16,8 +16,8 @@ export const Map: React.FC<MapProps> = ({
   denuncias,
   selectedDenunciaId,
   onSelectDenuncia,
-  center = [-8.225, -78.975], // Salaverry center
-  zoom = 14,
+  center = [-8.1119, -79.0287], // Plaza de Armas de Trujillo
+  zoom = 11,
   interactive = true,
   theme = 'light',
 }) => {

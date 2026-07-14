@@ -260,7 +260,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             </div>
 
             {/* Contenido del Panel */}
-            <div className="flex-grow p-6 overflow-y-auto space-y-6">
+            <div className="flex-grow p-6 overflow-y-scroll space-y-6">
               {/* Empresa Responsable */}
               <div className="space-y-1.5">
                 <span className="text-[10px] font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
@@ -295,7 +295,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
                 {/* Mapa con la ubicación exacta */}
                 {selectedDenuncia.latitud && selectedDenuncia.longitud ? (
-                  <div className="w-full h-44 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800/80 shadow-inner">
+                  <div className="w-full h-[30rem] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800/80 shadow-inner">
                     <Map
                       denuncias={[selectedDenuncia]}
                       selectedDenunciaId={selectedDenuncia.id}

@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import type { Denuncia } from '../types';
 
 interface ChartProps {
-  data: Record<string, number>;
+  data?: Record<string, number>;
+  denuncias?: Denuncia[];
   loading?: boolean;
   theme?: 'light' | 'dark';
 }
 
-export const GravityDonutChart: React.FC<ChartProps> = ({ data, loading, theme = 'light' }) => {
+export const GravityDonutChart: React.FC<ChartProps> = ({ data = {}, loading, theme = 'light' }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const entries = Object.entries(data).filter(([_, val]) => val > 0);
@@ -30,7 +32,7 @@ export const GravityDonutChart: React.FC<ChartProps> = ({ data, loading, theme =
 
   if (total === 0) {
     return (
-      <div className="w-full h-64 bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-center p-6 text-slate-400 dark:text-slate-500">
+      <div className="w-full h-64 bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-center p-6 text-slate-400 dark:text-slate-550">
         Sin datos suficientes para graficar
       </div>
     );
@@ -62,7 +64,7 @@ export const GravityDonutChart: React.FC<ChartProps> = ({ data, loading, theme =
   });
 
   return (
-    <div className="w-full bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col md:flex-row items-center gap-6 glass-panel">
+    <div className="w-full bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col md:flex-row items-center gap-6 glass-panel shadow-sm">
       <div className="relative w-40 h-40 flex-shrink-0">
         <svg viewBox="0 0 160 160" className="w-full h-full transform -rotate-90">
           <circle
@@ -99,7 +101,7 @@ export const GravityDonutChart: React.FC<ChartProps> = ({ data, loading, theme =
               <span className="text-2xl font-bold font-sans text-slate-850 dark:text-slate-100">
                 {slices[hoveredIndex].value}
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-450 uppercase tracking-wider">
+              <span className="text-xs text-slate-550 dark:text-slate-455 uppercase tracking-wider">
                 {slices[hoveredIndex].name}
               </span>
             </>
@@ -108,7 +110,7 @@ export const GravityDonutChart: React.FC<ChartProps> = ({ data, loading, theme =
               <span className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
                 {total}
               </span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+              <span className="text-[10px] text-slate-555 dark:text-slate-400 uppercase tracking-widest">
                 Total
               </span>
             </>
@@ -149,7 +151,7 @@ export const GravityDonutChart: React.FC<ChartProps> = ({ data, loading, theme =
   );
 };
 
-export const TypesBarChart: React.FC<ChartProps> = ({ data, loading }) => {
+export const TypesBarChart: React.FC<ChartProps> = ({ data = {}, loading }) => {
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
   const entries = Object.entries(data).sort((a, b) => b[1] - a[1]);
@@ -194,7 +196,7 @@ export const TypesBarChart: React.FC<ChartProps> = ({ data, loading }) => {
   }
 
   return (
-    <div className="w-full bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 glass-panel">
+    <div className="w-full bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 glass-panel shadow-sm">
       <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4">Tipos de Contaminación Registrados</h4>
       <div className="space-y-4">
         {entries.map(([name, val]) => {
@@ -210,7 +212,7 @@ export const TypesBarChart: React.FC<ChartProps> = ({ data, loading }) => {
             >
               <div className="flex justify-between items-center text-xs">
                 <span className="font-medium text-slate-700 dark:text-slate-300">{name}</span>
-                <span className="text-slate-500 dark:text-slate-400">
+                <span className="text-slate-505 dark:text-slate-400">
                   <strong className="text-slate-800 dark:text-slate-100 font-semibold">{val}</strong>{' '}
                   {val === 1 ? 'denuncia' : 'denuncias'}
                 </span>
@@ -224,6 +226,186 @@ export const TypesBarChart: React.FC<ChartProps> = ({ data, loading }) => {
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+};
+
+export const CompaniesBarChart: React.FC<ChartProps> = ({ denuncias = [], loading }) => {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  // Procesar las denuncias para obtener las empresas con más denuncias
+  const companyCounts: [string, number][] = useMemo(() => {
+    const counts: Record<string, number> = {};
+    denuncias.forEach(d => {
+      const name = d.empresa ? d.empresa.trim() : 'Responsable no identificado';
+      counts[name] = (counts[name] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5); // Obtener Top 5
+  }, [denuncias]);
+
+  if (loading) {
+    return (
+      <div className="w-full h-64 bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between p-6 animate-pulse">
+        <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-1/3 mb-4"></div>
+        <div className="space-y-4 flex-grow justify-center flex flex-col">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (companyCounts.length === 0) {
+    return (
+      <div className="w-full h-64 bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-center p-6 text-slate-400 dark:text-slate-550">
+        Sin reportes de empresas identificadas
+      </div>
+    );
+  }
+
+  const maxCount = Math.max(...companyCounts.map((c: [string, number]) => c[1]), 1);
+
+  return (
+    <div className="w-full bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 glass-panel shadow-sm">
+      <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4">Infractores Más Reportados (Top 5)</h4>
+      <div className="space-y-4">
+        {companyCounts.map(([name, count]: [string, number], idx: number) => {
+          const widthPercent = (count / maxCount) * 100;
+          const isHovered = hoveredIndex === idx;
+
+          return (
+            <div
+              key={name}
+              className="space-y-1.5 cursor-pointer"
+              onMouseEnter={() => setHoveredIndex(idx)}
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-semibold text-slate-700 dark:text-slate-350 truncate max-w-[220px]" title={name}>
+                  {name}
+                </span>
+                <span className="text-slate-500 dark:text-slate-400 font-bold">
+                  {count} {count === 1 ? 'reporte' : 'reportes'}
+                </span>
+              </div>
+              <div className="w-full h-3 bg-slate-100 dark:bg-slate-800/50 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700/30">
+                <div
+                  className={`h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-550 ease-out ${
+                    isHovered ? 'brightness-110 shadow-sm' : ''
+                  }`}
+                  style={{ width: `${widthPercent}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+export const TrendLineChart: React.FC<ChartProps> = ({ denuncias = [], loading, theme = 'light' }) => {
+  // Agrupar denuncias de los últimos 7 días
+  const trendData: { date: string; count: number }[] = useMemo(() => {
+    const daysMap: Record<string, number> = {};
+    
+    // Rellenar últimos 7 días con 0 por defecto
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' });
+      daysMap[key] = 0;
+    }
+
+    denuncias.forEach(denuncia => {
+      const key = new Date(denuncia.created_at).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' });
+      if (key in daysMap) {
+        daysMap[key] += 1;
+      }
+    });
+
+    return Object.entries(daysMap).map(([date, count]) => ({ date, count }));
+  }, [denuncias]);
+
+  if (loading) {
+    return (
+      <div className="w-full h-64 bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center p-6 animate-pulse">
+        <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-1/3 mb-4"></div>
+        <div className="w-full h-32 bg-slate-100 dark:bg-slate-850 rounded"></div>
+      </div>
+    );
+  }
+
+  const maxCount = Math.max(...trendData.map((d: { date: string; count: number }) => d.count), 1);
+  const chartHeight = 100;
+  const chartWidth = 320;
+  const padding = 20;
+
+  // Generar puntos del gráfico SVG de línea/área
+  const points = trendData.map((d: { date: string; count: number }, idx: number) => {
+    const x = padding + (idx * (chartWidth - 2 * padding)) / (trendData.length - 1);
+    const y = chartHeight - padding - (d.count * (chartHeight - 2 * padding)) / maxCount;
+    return { x, y, ...d };
+  });
+
+  const linePath = points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  const areaPath = points.length > 0 
+    ? `${linePath} L ${points[points.length - 1].x} ${chartHeight - padding} L ${points[0].x} ${chartHeight - padding} Z`
+    : '';
+
+  return (
+    <div className="w-full bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 glass-panel shadow-sm">
+      <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4">Historial Reciente (Últimos 7 Días)</h4>
+      
+      <div className="w-full flex justify-center">
+        <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-36 overflow-visible">
+          {/* Defs para gradiente del área */}
+          <defs>
+            <linearGradient id="gradientArea" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
+
+          {/* Líneas horizontales de guía */}
+          <line x1={padding} y1={padding} x2={chartWidth - padding} y2={padding} stroke={theme === 'dark' ? '#1e293b' : '#f1f5f9'} strokeWidth={1} />
+          <line x1={padding} y1={chartHeight - padding} x2={chartWidth - padding} y2={chartHeight - padding} stroke={theme === 'dark' ? '#334155' : '#cbd5e1'} strokeWidth={1} />
+
+          {/* Relleno de Área */}
+          {areaPath && <path d={areaPath} fill="url(#gradientArea)" />}
+
+          {/* Línea Principal */}
+          {linePath && <path d={linePath} fill="none" stroke="#10b981" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />}
+
+          {/* Nodos de puntos */}
+          {points.map((p: { x: number; y: number; date: string; count: number }, idx: number) => (
+            <g key={idx} className="group/node cursor-pointer">
+              <circle cx={p.x} cy={p.y} r={4} fill="#ffffff" stroke="#10b981" strokeWidth={2} />
+              <circle cx={p.x} cy={p.y} r={8} fill="#10b981" fillOpacity={0} className="hover:fill-opacity-20 transition-all" />
+              {/* Tooltip flotante simple */}
+              <title>{`${p.date}: ${p.count} denuncias`}</title>
+            </g>
+          ))}
+
+          {/* Etiquetas del Eje X */}
+          {points.map((p: { x: number; y: number; date: string; count: number }, idx: number) => (
+            <text
+              key={idx}
+              x={p.x}
+              y={chartHeight - 4}
+              fontSize={8}
+              fill={theme === 'dark' ? '#94a3b8' : '#64748b'}
+              textAnchor="middle"
+              className="font-medium"
+            >
+              {p.date}
+            </text>
+          ))}
+        </svg>
       </div>
     </div>
   );
